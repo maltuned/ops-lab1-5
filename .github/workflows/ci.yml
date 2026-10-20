@@ -1,0 +1,56 @@
+name: ci
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-go@v7
+        with:
+          go-version: "1.26.9"
+
+      - run: |
+          echo "event_name = $EVENT_NAME"
+          echo "ref = $REF"
+          echo "sha = $SHA"
+          echo "event.pull_request.head.sha = $PR_HEAD_SHA"
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REF: ${{ github.ref }}
+          SHA: ${{ github.sha }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+
+      - run: make fmt-check
+      - run: make vet
+      - run: make test
+
+      - if: ${{ github.event_name == 'push' }}
+        run: make package VERSION=0.0.0-main
+        env:
+          BUILD_NO: ${{ github.run_number }}
+          RUN_ID: ${{ github.run_id }}
+          COMMIT: ${{ github.sha }}
+
+      - if: ${{ github.event_name == 'push' }}
+        run: |
+          sha256sum dist/enroll-conflict_0.0.0-main_linux_amd64/enroll-conflict
+          sha256sum dist/enroll-conflict_0.0.0-main_linux_amd64.tar.gz
+
+      - if: ${{ github.event_name == 'push' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: enroll-conflict_${{ github.sha }}_${{ github.run_number }}
+          path: |
+            dist/*.tar.gz
+            dist/*.tar.gz.sha256
+          retention-days: 14
