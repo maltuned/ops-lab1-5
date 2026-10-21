@@ -1,0 +1,64 @@
+name: release
+
+on:
+  push:
+    tags:
+      - v[0-9]+.[0-9]+.[0-9]+ # 匹配 v1.0.0 形式的 tag；这是 GitHub 的过滤语法，不是正则表达式
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # 获取完整历史，才能判断 tag 是否在 main 上
+
+      - name: Verify tag commit is on main
+        run: |
+          git fetch origin main
+          if ! git merge-base --is-ancestor "$COMMIT" origin/main; then
+            echo "::error::Tag $TAG_NAME points to a commit that is not on origin/main."
+            exit 1
+          fi
+        env:
+          COMMIT: ${{ github.sha }}
+          TAG_NAME: ${{ github.ref_name }}
+
+      - uses: actions/setup-go@v7
+        with:
+          go-version: "1.26.9"
+          cache: false
+
+      - name: Run format checks
+        run: make fmt-check
+
+      - name: Run static checks
+        run: make vet
+
+      - name: Run tests
+        run: make test
+
+      - name: Package release
+        run: |
+          make package VERSION="${TAG_NAME#v}"
+          sha256sum dist/*.tar.gz
+          (cd dist && sha256sum --check *.tar.gz.sha256)
+        env:
+          TAG_NAME: ${{ github.ref_name }}
+          BUILD_NO: ${{ github.run_number }}
+          RUN_ID: ${{ github.run_id }}
+          COMMIT: ${{ github.sha }} # 自带的 $GITHUB_SHA 与 $COMMIT 等价
+
+      - name: Create GitHub Release
+        run: |
+          gh release create "$TAG_NAME" \
+            --verify-tag \
+            --title "$TAG_NAME" \
+            --generate-notes \
+            dist/*.tar.gz dist/*.tar.gz.sha256
+        env:
+          TAG_NAME: ${{ github.ref_name }}
+          GH_TOKEN: ${{ github.token }}
