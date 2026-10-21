@@ -28,6 +28,53 @@ func TestVersionEndpoint(t *testing.T) {
 	}
 }
 
+func TestVersionEndpointBuildInfo(t *testing.T) {
+	originalVersion, originalCommit, originalBuildNo := version, commit, buildNo
+	t.Cleanup(func() {
+		version, commit, buildNo = originalVersion, originalCommit, originalBuildNo
+	})
+
+	// 使用不同的构建信息，验证发布和回退时接口不会返回写死的版本或默认值。
+	cases := []struct {
+		version string
+		commit  string
+		buildNo string
+	}{
+		{"1.0.0", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "1"},
+		{"1.0.1", "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "2"},
+	}
+	for _, c := range cases {
+		t.Run(c.version, func(t *testing.T) {
+			version, commit, buildNo = c.version, c.commit, c.buildNo
+			rec := httptest.NewRecorder()
+			newMux().ServeHTTP(rec, httptest.NewRequest("GET", "/version", nil))
+			if rec.Code != http.StatusOK {
+				t.Fatalf("/version 返回 %d，期望 200", rec.Code)
+			}
+			if got := rec.Header().Get("Content-Type"); got != "application/json" {
+				t.Errorf("/version Content-Type = %q，期望 application/json", got)
+			}
+
+			var got map[string]string
+			if err := json.Unmarshal(rec.Body.Bytes(), &got); err != nil {
+				t.Fatalf("/version 不是合法 JSON：%v", err)
+			}
+			for field, want := range map[string]string{
+				"version":  c.version,
+				"commit":   c.commit,
+				"build_no": c.buildNo,
+			} {
+				if got[field] != want {
+					t.Errorf("/version %s = %q，期望 %q", field, got[field], want)
+				}
+			}
+			if got["go"] == "" {
+				t.Error("/version 缺少 Go 版本")
+			}
+		})
+	}
+}
+
 func TestConflictEndpoint(t *testing.T) {
 	post := func(body string) *httptest.ResponseRecorder {
 		rec := httptest.NewRecorder()
