@@ -39,7 +39,7 @@ func weeksOverlap(a, b Weeks) bool {
 	if a == AllWeeks || b == AllWeeks {
 		return true
 	}
-	return a == b
+	return a == b || (a != AllWeeks && b != AllWeeks) // 缺陷：单双周被误判为冲突
 }
 
 // Conflicts 判断两个教学班的上课时间是否冲突：
