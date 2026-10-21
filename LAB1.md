@@ -34,31 +34,50 @@
 | 第二轮：仅含缺陷时仍然通过的运行               | https://github.com/maltuned/ops-lab1-5/actions/runs/39608694172                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | 第二轮：补测试后失败的运行                     | https://github.com/maltuned/ops-lab1-5/actions/runs/39609381983                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | 第二轮：撤销缺陷后通过的运行                   | https://github.com/maltuned/ops-lab1-5/actions/runs/39610030268                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
-| 未合入分支上的 tag 被 release gate 拒绝的运行  | <链接>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
-| Release v1.0.0                                 | <链接>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| 未合入分支上的 tag 被 release gate 拒绝的运行  | https://github.com/maltuned/ops-lab1-5/actions/runs/39617429494                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| Release v1.0.0                                 | https://github.com/maltuned/ops-lab1-5/releases/tag/v1.0.0                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | Release v1.0.1                                 | <链接>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 
 ## 4. 追溯与运行
 
 对 v1.0.0 和 v1.0.1 各运行一次 `scripts/trace.sh`，粘贴输出，并填写下表。
 
-| 项                                                 | v1.0.0       | v1.0.1       |
-| -------------------------------------------------- | ------------ | ------------ |
-| 版本号                                             | <填写>       | <填写>       |
-| 构建号                                             | <填写>       | <填写>       |
-| 提交号（SHA）                                      | <填写>       | <填写>       |
-| 引入该提交的 PR                                    | <编号与链接> | <编号与链接> |
-| 构建它的 Actions 运行（`trace.sh` 给出的链接）     | <链接>       | <链接>       |
-| 制品 sha256（发布当时，取自 Release 里的 .sha256） | <填写>       | <填写>       |
+| 项                                                 | v1.0.0                                                                  | v1.0.1       |
+| -------------------------------------------------- | ----------------------------------------------------------------------- | ------------ |
+| 版本号                                             | 1.0.0                                                                   | <填写>       |
+| 构建号                                             | 1                                                                       | <填写>       |
+| 提交号（SHA）                                      | 42fd737d994272f65e93b89af2fbe8d1fa2031df                                | <填写>       |
+| 引入该提交的 PR                                    | #7 https://github.com/maltuned/ops-lab1-5/pull/7                        | <编号与链接> |
+| 构建它的 Actions 运行（`trace.sh` 给出的链接）     | https://github.com/maltuned/ops-lab1-5/actions/runs/39615211859         | <链接>       |
+| 制品 sha256（发布当时，取自 Release 里的 .sha256） | sha256:9b2698a08ded233b238c54a6bd7009b3d074d222d48939e0e5edd7aec0009d9e | <填写>       |
 
-仅凭构建号能否唯一确定是哪次运行？v1.0.0 的构建号在 `ci` 和 `release` 的运行列表中各对应哪次运行？<填写>
+仅凭构建号能否唯一确定是哪次运行？v1.0.0 的构建号在 `ci` 和 `release` 的运行列表中各对应哪次运行？
+不能，构建号是针对一个 workflow 的运行次数，不能确定是哪个 workflow。v1.0.0 的构建号为 1，不对应 ci 的 [构建号 #1 运行](https://github.com/maltuned/ops-lab1-5/actions/runs/39382612527)，而对应 release 的 [构建号 #1 运行](https://github.com/maltuned/ops-lab1-5/actions/runs/39615211859)。
 
 发布 v1.0.1 之后重新下载 v1.0.0 的附件，计算得到的 sha256：<填写>。与上表中发布当时的值是否一致？<填写>
 
 `trace.sh` 输出（v1.0.0）：
 
 ```text
-<粘贴>
+scripts/trace.sh ../enroll-conflict_1.0.0_linux_amd64.tar.gz
+== 1. 校验和
+enroll-conflict_1.0.0_linux_amd64.tar.gz: OK
+== 2. 制品里的 BUILD_INFO
+name=enroll-conflict
+version=1.0.0
+build_no=1
+run_id=39615211859
+commit=42fd737d994272f65e93b89af2fbe8d1fa2031df
+go=go1.26.9
+== 3. 提交 42fd737d994272f65e93b89af2fbe8d1fa2031df
+作者: Yuanzhe Cai <kiyyaforever007@gmail.com>
+时间: 2026-10-21T22:11:28+08:00
+标题: Finish Release Workflow (Task 5) (#7)
+主干: 该提交在 origin/main 的历史上
+指向它的 tag: v1.0.0
+版本号: 1.0.0    构建号: 1
+提交页面（含关联的 PR）: https://github.com/maltuned/ops-lab1-5/commit/42fd737d994272f65e93b89af2fbe8d1fa2031df
+构建它的运行: https://github.com/maltuned/ops-lab1-5/actions/runs/39615211859
 ```
 
 `trace.sh` 输出（v1.0.1）：
