@@ -51,10 +51,5 @@ func Conflicts(a, b Section) bool {
 	if !weeksOverlap(a.Weeks, b.Weeks) {
 		return false
 	}
-	// 缺陷：把只有一个节次的时段（Start == End）误判为“不会冲突”，
-	// 现有测试只覆盖多节次时段，无法发现它。
-	if a.Start == a.End || b.Start == b.End {
-		return false
-	}
 	return a.Start <= b.End && b.Start <= a.End
 }
