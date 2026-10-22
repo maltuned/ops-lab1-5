@@ -62,3 +62,54 @@ jobs:
         env:
           TAG_NAME: ${{ github.ref_name }}
           GH_TOKEN: ${{ github.token }}
+
+  image:
+    needs: release
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Download and verify Release assets
+        run: |
+          version="${TAG_NAME#v}"
+          package="enroll-conflict_${version}_linux_amd64"
+          asset_dir="$RUNNER_TEMP/release-assets"
+          mkdir -p "$asset_dir"
+          gh release download "$TAG_NAME" \
+            --repo "$GITHUB_REPOSITORY" \
+            --pattern "$package.tar.gz" \
+            --pattern "$package.tar.gz.sha256" \
+            --dir "$asset_dir"
+          (cd "$asset_dir" && sha256sum --check "$package.tar.gz.sha256")
+          tar -xzf "$asset_dir/$package.tar.gz" -C "$asset_dir"
+          echo "context=$asset_dir/$package" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "image=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG_NAME: ${{ github.ref_name }}
+
+      - uses: docker/setup-buildx-action@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      - name: Build and push image from Release binary
+        uses: docker/build-push-action@v7
+        with:
+          context: ${{ steps.assets.outputs.context }}
+          file: ${{ github.workspace }}/Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.assets.outputs.image }}:${{ github.ref_name }}
+          build-args: |
+            VERSION=${{ steps.assets.outputs.version }}
+            COMMIT=${{ github.sha }}
+            SOURCE=${{ github.server_url }}/${{ github.repository }}
