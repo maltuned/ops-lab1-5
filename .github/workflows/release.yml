@@ -73,6 +73,7 @@ jobs:
       - uses: actions/checkout@v7
 
       - name: Download and verify Release assets
+        id: assets
         run: |
           version="${TAG_NAME#v}"
           package="enroll-conflict_${version}_linux_amd64"
