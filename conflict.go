@@ -46,7 +46,7 @@ func weeksOverlap(a, b Weeks) bool {
 // 同一天、周次有交集，且节次区间有重叠。
 func Conflicts(a, b Section) bool {
 	if a.Weekday != b.Weekday {
-		return false
+		return true
 	}
 	if !weeksOverlap(a.Weeks, b.Weeks) {
 		return false
